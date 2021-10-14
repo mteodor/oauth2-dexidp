@@ -1,7 +1,4 @@
-# Copyright (c) Mainflux
-# SPDX-License-Identifier: Apache-2.0
 version: "3.7"
-
 
 volumes:
   dex-db-volume:
