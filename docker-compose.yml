@@ -1,0 +1,71 @@
+# Copyright (c) Mainflux
+# SPDX-License-Identifier: Apache-2.0
+version: "3.7"
+
+
+volumes:
+  dex-db-volume:
+
+services:
+  dex:
+    image: docker.io/bitnami/dex:latest
+    container_name: dex
+    restart: on-failure
+    volumes: 
+      - ./config.dev.yaml:/config.yaml
+      - ./dex.db:/dex.db
+    command: serve /config.yaml
+    network_mode: "host"
+    depends_on:
+      - dex-db
+   
+  dex-db:
+    image: postgres:13.1-alpine
+    container_name: dex-db
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: localhost
+    network_mode: "host"
+    volumes:
+      - dex-db-volume:/var/lib/postgresql/data
+
+  http-echo:
+    image: brndnmtthws/nginx-echo-headers
+    container_name: http-echo
+    restart: on-failure
+    network_mode: "host"
+  
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy
+    container_name: oauth2-proxy
+    restart: on-failure
+    network_mode: "host"
+    depends_on: 
+      # - dex
+      - http-echo
+    command: "--pass-access-token=true --pass-authorization-header=true --set-xauthrequest=true --set-authorization-header=true" 
+    environment:
+      OAUTH2_PROXY_UPSTREAM: http://localhost/echo
+      OAUTH2_PROXY_PROVIDER: oidc
+      OAUTH2_PROXY_PROVIDER_DISPLAY_NAME: oauth2-dex-example
+      OAUTH2_PROXY_CLIENT_ID: oauth2-proxy
+      OAUTH2_PROXY_CLIENT_SECRET: ZXhhbXBsZS1hcHAtc2VjcmV0
+      OAUTH2_PROXY_REDIRECT_URL: http://localhost/oauth2/callback
+      OAUTH2_PROXY_COOKIE_SECRET: KzE2bSt4VDRiendJUVFZRDlEcFhaUT09
+      OAUTH2_PROXY_COOKIE_SECURE: "false"
+      OAUTH2_PROXY_OIDC_ISSUER_URL: http://localhost/dex
+      OAUTH2_PROXY_EMAIL_DOMAINS: "*"
+      OAUTH2_PROXY_COOKIE_HTTPONLY: "false"  
+
+  nginx:
+    image: nginx:1.20.0-alpine  
+    container_name: oauth-nginx
+    restart: on-failure
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    network_mode: "host"
+   
+
+
