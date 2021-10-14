@@ -44,7 +44,6 @@ services:
       - http-echo
     command: "--pass-access-token=true --pass-authorization-header=true --set-xauthrequest=true --set-authorization-header=true" 
     environment:
-      OAUTH2_PROXY_UPSTREAM: http://localhost/echo
       OAUTH2_PROXY_PROVIDER: oidc
       OAUTH2_PROXY_PROVIDER_DISPLAY_NAME: oauth2-dex-example
       OAUTH2_PROXY_CLIENT_ID: oauth2-proxy
